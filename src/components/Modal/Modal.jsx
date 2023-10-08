@@ -1,18 +1,33 @@
+import { Component } from 'react';
 import styles from './Modal.module.css';
 
-export const Modal = () => {
-  //   const instance = BasicLightBox.create(
-  //     ``
-  //   );
+export class Modal extends Component {
+  componentDidMount() {
+    window.addEventListener('keydown', this.escClose);
+    window.addEventListener('click', this.escClose);
+  }
 
-  return (
-    <div className={styles.overlay}>
-      <div className={styles.modal}>
-        <img
-          src="https://www.zdnet.com/a/img/resize/ba1b1ab92085d777ab5e313b34c66a94b7aa1236/2023/06/05/79a43eb8-ce38-488c-8cc0-e04699aaca7f/bing.jpg?auto=webp&width=1280"
-          alt="Here is something"
-        />
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.escClose);
+    window.removeEventListener('click', this.escClose);
+  }
+
+  escClose = e => {
+    const overlay = styles.overlay;
+    if (e.key === 'Escape' || e.target.className === overlay) {
+      this.props.closeModal();
+    }
+  };
+
+  render() {
+    const { imgUrl } = this.props;
+
+    return (
+      <div className={styles.overlay} onClick={this.escClose}>
+        <div className={styles.modal}>
+          <img src={imgUrl} alt="" />
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  }
+}

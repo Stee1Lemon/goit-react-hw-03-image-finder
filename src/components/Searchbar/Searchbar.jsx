@@ -1,6 +1,6 @@
 import styles from './Searchbar.module.css';
 
-export const Searchbar = ({ onSubmit }) => {
+export const Searchbar = ({ onSubmit, onChange, value }) => {
   return (
     <>
       <header className={styles.searchbar}>
@@ -11,11 +11,12 @@ export const Searchbar = ({ onSubmit }) => {
 
           <input
             className={styles.input}
-            name="picture"
             type="text"
             autoComplete="off"
             autoFocus
             placeholder="Search images and photos"
+            onChange={onChange}
+            value={value}
           />
         </form>
       </header>

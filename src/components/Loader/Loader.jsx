@@ -1,8 +1,9 @@
 import { Triangle } from 'react-loader-spinner';
+import styles from './Loader.module.css';
 
 export const Loader = () => {
   return (
-    <div>
+    <div className={styles.loader}>
       <Triangle
         height="80"
         width="80"
