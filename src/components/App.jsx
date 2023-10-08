@@ -15,6 +15,7 @@ export class App extends Component {
     searchbarField: '',
     currentPage: null,
     imagesToRender: null,
+    totalHits: null,
     isLoaded: false,
     error: false,
     messageNotFound: false,
@@ -27,10 +28,18 @@ export class App extends Component {
         this.setState({ isLoaded: true, error: false, messageNotFound: false });
         const toSearch = await fetchImages(this.state.imagesToFind, 1);
         if (toSearch.hits < 1) {
-          this.setState({ messageNotFound: true });
+          this.setState({
+            messageNotFound: true,
+            imagesToRender: null,
+            currentPage: null,
+          });
           return;
         }
-        this.setState({ imagesToRender: toSearch.hits, currentPage: 1 });
+        this.setState({
+          imagesToRender: toSearch.hits,
+          currentPage: 1,
+          totalHits: toSearch.totalHits,
+        });
       } catch (error) {
         this.setState({ error: true });
       } finally {
@@ -39,15 +48,20 @@ export class App extends Component {
     }
 
     if (prevState.currentPage !== this.state.currentPage) {
-      this.setState({ currentPage: this.state.currentPage });
-      if (this.state.currentPage === 1) return;
-      const toSearch = await fetchImages(
-        this.state.imagesToFind,
-        this.state.currentPage
-      );
-      this.setState(prev => {
-        return { imagesToRender: [...prev.imagesToRender, ...toSearch.hits] };
-      });
+      try {
+        this.setState({ currentPage: this.state.currentPage });
+        if (this.state.currentPage === 1 || this.state.currentPage === null)
+          return;
+        const toSearch = await fetchImages(
+          this.state.imagesToFind,
+          this.state.currentPage
+        );
+        this.setState(prev => {
+          return { imagesToRender: [...prev.imagesToRender, ...toSearch.hits] };
+        });
+      } catch (error) {
+        this.setState({ error: true });
+      }
     }
   }
 
