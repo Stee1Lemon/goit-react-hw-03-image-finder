@@ -12,10 +12,9 @@ import { fetchImages } from './Api/Api-services';
 export class App extends Component {
   state = {
     imagesToFind: '',
-    searchbarField: '',
-    currentPage: null,
-    imagesToRender: null,
-    totalHits: null,
+    currentPage: 1,
+    imagesToRender: [],
+    totalHits: 0,
     isLoaded: false,
     error: false,
     messageNotFound: false,
@@ -23,44 +22,32 @@ export class App extends Component {
   };
 
   async componentDidUpdate(prevProps, prevState) {
-    if (prevState.imagesToFind !== this.state.imagesToFind) {
+    const { imagesToFind, currentPage } = this.state;
+
+    if (
+      prevState.imagesToFind !== imagesToFind ||
+      prevState.currentPage !== currentPage
+    ) {
       try {
         this.setState({ isLoaded: true, error: false, messageNotFound: false });
-        const toSearch = await fetchImages(this.state.imagesToFind, 1);
-        if (toSearch.hits < 1) {
+        const data = await fetchImages(imagesToFind, currentPage);
+        if (!data.totalHits) {
           this.setState({
             messageNotFound: true,
-            imagesToRender: null,
-            currentPage: null,
           });
           return;
         }
-        this.setState({
-          imagesToRender: toSearch.hits,
-          currentPage: 1,
-          totalHits: toSearch.totalHits,
+
+        this.setState(prev => {
+          return {
+            imagesToRender: [...prev.imagesToRender, ...data.hits],
+            totalHits: data.totalHits,
+          };
         });
       } catch (error) {
         this.setState({ error: true });
       } finally {
         this.setState({ isLoaded: false });
-      }
-    }
-
-    if (prevState.currentPage !== this.state.currentPage) {
-      try {
-        this.setState({ currentPage: this.state.currentPage });
-        if (this.state.currentPage === 1 || this.state.currentPage === null)
-          return;
-        const toSearch = await fetchImages(
-          this.state.imagesToFind,
-          this.state.currentPage
-        );
-        this.setState(prev => {
-          return { imagesToRender: [...prev.imagesToRender, ...toSearch.hits] };
-        });
-      } catch (error) {
-        this.setState({ error: true });
       }
     }
   }
@@ -73,15 +60,12 @@ export class App extends Component {
     this.setState({ modalOpen: false });
   };
 
-  handleSearchbarField = ({ target: { value } }) => {
-    this.setState({ searchbarField: value });
-  };
-
-  handlePictures = e => {
-    e.preventDefault();
-
+  handlePictures = query => {
     this.setState({
-      imagesToFind: this.state.searchbarField,
+      imagesToFind: query,
+      imagesToRender: [],
+      currentPage: 1,
+      totalHits: 0,
     });
   };
 
@@ -94,20 +78,15 @@ export class App extends Component {
   render() {
     const {
       imagesToRender,
-      currentPage,
-      searchbarField,
       isLoaded,
       error,
       messageNotFound,
       modalOpen,
+      totalHits,
     } = this.state;
     return (
       <div className={styles.App}>
-        <Searchbar
-          onSubmit={this.handlePictures}
-          onChange={this.handleSearchbarField}
-          value={searchbarField}
-        />
+        <Searchbar onSubmit={this.handlePictures} />
         {isLoaded && <Loader />}
         {messageNotFound && <NotFoundMessage />}
         {error && <ErrorMassage />}
@@ -115,7 +94,9 @@ export class App extends Component {
           <ImageGallery images={imagesToRender} openModal={this.openModal} />
         )}
         {modalOpen && <Modal imgUrl={modalOpen} closeModal={this.closeModal} />}
-        {currentPage && <ButtonMore morePictures={this.handleMorePictures} />}
+        {!isLoaded && imagesToRender.length !== totalHits && (
+          <ButtonMore morePictures={this.handleMorePictures} />
+        )}
       </div>
     );
   }
